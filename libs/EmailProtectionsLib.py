@@ -26,6 +26,31 @@ class SpfRecord:
 		for item in self.items:
 			if re.match(".all", item):
 				self.all_string = item
+			redirect = re.match("redirect=(.*)", item)
+			if redirect is not None:
+				try:
+					spf_string = get_spf_string(redirect.group(1))
+					self._process_redirect(spf_string)
+				except:
+					return
+
+	def _process_redirect(self, spf_string):
+		spf_item_regex = "(?:((?:\+|-|~)?(?:a|mx|ptr|include|ip4|ip6|exists|redirect|exp|all)(?:(?::|/)?(?:\S*))?) ?)"
+		spf_version_r = "^v=(spf.)"
+		self.spf_string += " | " + spf_string
+		self.version = re.match(spf_version_r, spf_string).group(1)
+		self.items = re.findall(spf_item_regex, spf_string)
+
+		for item in self.items:
+			if re.match(".all", item):
+				self.all_string = item
+			redirect = re.match("redirect=(.*)", item)
+			if redirect is not None:
+				try:
+					spf_string = get_spf_string(redirect.group(1))
+					self._process_redirect(spf_string)
+				except:
+					return
 
 	def __str__(self):
 		return self.spf_string
@@ -43,7 +68,7 @@ class DmarcRecord:
 			if prepend == "v":
 				self.version = item[1]
 			elif prepend == "p":
-				self.prepend = item[1]
+				self.policy = item[1]
 			elif prepend == "pct":
 				self.pct = item[1]
 			elif prepend == "rua":
@@ -64,7 +89,7 @@ class DmarcRecord:
 def get_spf(domain):
 	try:
 		spf_string = get_spf_string(domain)
-		return process_spf_string(spf_string)
+		return SpfRecord(spf_string)
 	except NoSpfRecordException as e: 
 		raise
 
