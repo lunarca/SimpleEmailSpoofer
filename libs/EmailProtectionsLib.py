@@ -23,6 +23,10 @@ class SpfRecord:
 		self.version = re.match(spf_version_r, spf_string).group(1)
 		self.items = re.findall(spf_item_regex, spf_string)
 
+		for item in self.items:
+			if re.match(".all", item):
+				self.all_string = item
+
 	def __str__(self):
 		return self.spf_string
 
