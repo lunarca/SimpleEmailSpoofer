@@ -42,19 +42,19 @@ class DmarcRecord:
 			prepend = item[0]
 			if prepend == "v":
 				self.version = item[1]
-			else if prepend == "p":
+			elif prepend == "p":
 				self.prepend = item[1]
-			else if prepend == "pct":
+			elif prepend == "pct":
 				self.pct = item[1]
-			else if prepend == "rua":
+			elif prepend == "rua":
 				self.rua = item[1]
-			else if prepend == "ruf":
+			elif prepend == "ruf":
 				self.ruf = item[1]
-			else if prepend == "sp":
+			elif prepend == "sp":
 				self.subdomain_policy = item[1]
-			else if prepend == "adkim":
+			elif prepend == "adkim":
 				self.dkim_alignment = item[1]
-			else if prepend == "aspf":
+			elif prepend == "aspf":
 				self.spf_alignment = item[1]
 	
 	def __str__(self):
@@ -91,7 +91,7 @@ def get_spf_string(domain):
 def get_dmarc_string(domain):
 	dmarc_re = re.compile('^"(v=DMARC.*)"')
 	try:
-		for answer in dns.resolver.query("_dmarc." + domain, "TXT")
+		for answer in dns.resolver.query("_dmarc." + domain, "TXT"):
 			match = dmarc_re.match(str(answer))
 			if match is not None:
 				return match.group(1)
