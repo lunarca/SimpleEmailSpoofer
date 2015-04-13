@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 from libs.EmailProtectionsLib import *
 from libs.PrettyOutput import *
 
