@@ -160,34 +160,33 @@ if __name__ == "__main__":
 
     info("Sending to " + args.to_address)
 
-    # try:
-    info("Connecting to SMTP server at " + args.smtp_server + ":" + str(args.smtp_port))
-    server = smtplib.SMTP(args.smtp_server, args.smtp_port)
-    msg = MIMEMultipart("alternative")
-    msg.set_charset("utf-8")
+    try:
+        info("Connecting to SMTP server at " + args.smtp_server + ":" + str(args.smtp_port))
+        server = smtplib.SMTP(args.smtp_server, args.smtp_port)
+        msg = MIMEMultipart("alternative")
+        msg.set_charset("utf-8")
 
-    if args.from_name is not None:
-        info("Setting From header to: " + args.from_name + "<" + args.from_address + ">")
-        msg["From"] = args.from_name + "<" + args.from_address + ">"
-    else:
-        info("Setting From header to: " + args.from_address)
-        msg["From"] = args.from_address
+        if args.from_name is not None:
+            info("Setting From header to: " + args.from_name + "<" + args.from_address + ">")
+            msg["From"] = args.from_name + "<" + args.from_address + ">"
+        else:
+            info("Setting From header to: " + args.from_address)
+            msg["From"] = args.from_address
 
-    if args.subject is not None:
-        info("Setting Subject header to: " + args.subject)
-        msg["Subject"] = args.subject
+        if args.subject is not None:
+            info("Setting Subject header to: " + args.subject)
+            msg["Subject"] = args.subject
 
-    msg.attach(MIMEText(email_text, 'html', 'utf-8'))
+        msg.attach(MIMEText(email_text, 'html', 'utf-8'))
 
-    info("The email in full: ")
-    print msg
+        info("Send email?")
 
-    if not get_ack(args.force):
-        bad("Exiting")
-        exit(1)
+        if not get_ack(args.force):
+            bad("Exiting")
+            exit(1)
 
-    server.sendmail(args.from_address, args.to_address, msg.as_string())
+        server.sendmail(args.from_address, args.to_address, msg.as_string())
 
-    # except Exception as e:
-    #     error("Error: Could not send email to " + args.to_address )
-    #     raise e
+    except Exception as e:
+        error("Error: Could not send email to " + args.to_address )
+        raise e
