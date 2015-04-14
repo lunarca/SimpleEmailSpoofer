@@ -19,7 +19,7 @@ def get_args():
 
     parser.add_argument("-c", "--check", dest="spoof_check", action="store_true",
         help="Check to ensure FROM domain can be spoofed from (default)", default=True)
-    parser.add_argument("-n", "--nocheck", dest="spoof_check", action="store_false",
+    parser.add_argument("-x", "--nocheck", dest="spoof_check", action="store_false",
         help="Do not check that FROM domain can be spoofed from")
     parser.add_argument("-f", "--force", dest="force", action="store_true", default=False,
         help="Force the email to send despite protections")
@@ -33,7 +33,7 @@ def get_args():
     smtp_options = parser.add_argument_group("SMTP options")
     smtp_options.add_argument("-s", "--server", dest="smtp_server", 
         help="SMTP server IP or DNS name (default localhost)", default="localhost")
-    smtp_options.add_argument("-p", "--port", dest="smtp_port", help="SMTP server port (default 25)", 
+    smtp_options.add_argument("-p", "--port", dest="smtp_port", type=int, help="SMTP server port (default 25)", 
         default=25)
 
     return parser.parse_args()
@@ -52,6 +52,8 @@ def get_ack(force):
 
 if __name__ == "__main__":
     args = get_args()
+
+    print args
 
     email_text = ""
 
@@ -98,7 +100,7 @@ if __name__ == "__main__":
                 bad("Exiting")
                 exit(1)
 
-    if spoof_check:
+    if args.spoof_check:
         spoofable = False
         try:
             spf = get_spf(from_domain)
@@ -158,34 +160,34 @@ if __name__ == "__main__":
 
     info("Sending to " + args.to_address)
 
-    try:
-        info("Connecting to SMTP server at " + args.smtp_server + ":" + args.smtp_port)
-        server = smtplib.SMTP(args.smtp_server, args.smtp_port)
-        msg = MIMEMultipart("alternative")
-        msg.set_charset("utf-8")
+    # try:
+    info("Connecting to SMTP server at " + args.smtp_server + ":" + str(args.smtp_port))
+    server = smtplib.SMTP(args.smtp_server, args.smtp_port)
+    msg = MIMEMultipart("alternative")
+    msg.set_charset("utf-8")
 
-        if from_name is not None:
-            info("Setting From header to: " + from_name + "<" + from_address + ">")
-            msg["From"] = from_name + "<" + from_address + ">"
-        else:
-            info("Setting From header to: " + from_name)
-            msg["From"] = from_address
+    if from_name is not None:
+        info("Setting From header to: " + from_name + "<" + from_address + ">")
+        msg["From"] = from_name + "<" + from_address + ">"
+    else:
+        info("Setting From header to: " + from_name)
+        msg["From"] = from_address
 
-        if args.subject is not None:
-            info("Setting Subject header to: " + args.subject)
-            msg["Subject"] = args.subject
+    if args.subject is not None:
+        info("Setting Subject header to: " + args.subject)
+        msg["Subject"] = args.subject
 
-        msg.attach(MIMEText(email_text, 'html', 'utf-8'))
+    msg.attach(MIMEText(email_text, 'html', 'utf-8'))
 
-        info("The email in full: ")
-        print msg
+    info("The email in full: ")
+    print msg
 
-        if not args.force:
-            bad("Exiting. (-f to override)")
-            exit(2)
+    if not args.force:
+        bad("Exiting. (-f to override)")
+        exit(2)
 
-        server.sendmail(to_address, msg)
+    server.sendmail(args.to_address, msg)
 
-    except:
-        error("Error: Could not send email to " + to_address )
-
+    # except Exception as e:
+    #     error("Error: Could not send email to " + args.to_address )
+    #     raise e
