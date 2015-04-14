@@ -186,7 +186,7 @@ if __name__ == "__main__":
         bad("Exiting")
         exit(1)
 
-    server.sendmail(args.to_address, msg)
+    server.sendmail(args.from_address, args.to_address, msg.as_string())
 
     # except Exception as e:
     #     error("Error: Could not send email to " + args.to_address )
