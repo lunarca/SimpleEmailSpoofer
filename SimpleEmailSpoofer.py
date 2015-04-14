@@ -182,9 +182,9 @@ if __name__ == "__main__":
     info("The email in full: ")
     print msg
 
-    if not args.force:
-        bad("Exiting. (-f to override)")
-        exit(2)
+    if not get_ack(args.force):
+        bad("Exiting")
+        exit(1)
 
     server.sendmail(args.to_address, msg)
 
