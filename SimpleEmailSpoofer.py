@@ -170,7 +170,7 @@ if __name__ == "__main__":
         info("Setting From header to: " + args.from_name + "<" + args.from_address + ">")
         msg["From"] = args.from_name + "<" + args.from_address + ">"
     else:
-        info("Setting From header to: " + args.from_name)
+        info("Setting From header to: " + args.from_address)
         msg["From"] = args.from_address
 
     if args.subject is not None:
