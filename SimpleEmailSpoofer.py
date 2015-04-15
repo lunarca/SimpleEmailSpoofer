@@ -40,15 +40,17 @@ def get_args():
 
 def get_ack(force):
     info("To continue: [yes/no]")
-    if not force:
+    if force is False:
         yn = raw_input()
         if yn != "yes":
             return False
         else:
             return True
-    else:
+    elif force is True:
         meh( "Forced yes")
         return True
+    else:
+        raise TypeError("Passed in non-boolean")
 
 if __name__ == "__main__":
     args = get_args()
@@ -105,10 +107,8 @@ if __name__ == "__main__":
         try:
             spf = get_spf(from_domain)
 
-            try:
-                if not (spf.all_string == "~all" or spf.all_string == "-all"):
-                    spoofable = True
-            except: pass
+            if spf.all_string is not None and not (spf.all_string == "~all" or spf.all_string == "-all"):
+                spoofable = True
 
         except NoSpfRecordException:
             spoofable = True
@@ -117,32 +117,23 @@ if __name__ == "__main__":
             dmarc = get_dmarc(from_domain)
             info(str(dmarc))
 
-            try:
-                if not dmarc.policy == "reject" and not dmarc.policy == "quarantine":
-                    spoofable = True
-
-            except AttributeError:
+            if dmarc.policy is None or not (dmarc.policy == "reject" or dmarc.policy == "quarantine"):
                 spoofable = True
 
-            try:
-                if dmarc.pct != str(100):
-                    meh("DMARC pct is set to " + dmarc.pct +"% - Spoofing might be possible")
-            except: pass
+            if dmarc.pct is not None and dmarc.pct != str(100):
+                meh("DMARC pct is set to " + dmarc.pct +"% - Spoofing might be possible")
 
-            try:
+            if dmarc.rua is not None:
                 meh("Aggregate reports will be sent: " + dmarc.rua)
                 if not get_ack(args.force):
                     bad("Exiting")
                     exit(1)
-            except: pass
 
-            try:
+            if dmarc.ruf is not None:
                 meh("Forensics reports will be sent: " + dmarc.ruf)
                 if not get_ack(args.force):
                     bad("Exiting")
                     exit(1)
-            except: pass
-
 
         except NoDmarcRecordException:
             spoofable = True
@@ -187,6 +178,6 @@ if __name__ == "__main__":
 
         server.sendmail(args.from_address, args.to_address, msg.as_string())
 
-    except Exception as e:
+    except smtplib.SMTPException as e:
         error("Error: Could not send email to " + args.to_address )
         raise e
