@@ -1,5 +1,6 @@
 import re
 import dns.resolver
+import logging
 
 class NoSpfRecordException(Exception):
     def __init__(self, value):
@@ -14,7 +15,7 @@ class NoDmarcRecordException(Exception):
         return repr(self.value)
 
 
-class SpfRecord:
+class SpfRecord(object):
     def __init__(self, spf_string):
         spf_item_regex = "(?:((?:\+|-|~)?(?:a|mx|ptr|include|ip4|ip6|exists|redirect|exp|all)(?:(?::|/)?(?:\S*))?) ?)"
         spf_version_r = "^v=(spf.)"
@@ -22,6 +23,8 @@ class SpfRecord:
         self.spf_string = spf_string
         self.version = re.match(spf_version_r, spf_string).group(1)
         self.items = re.findall(spf_item_regex, spf_string)
+
+        self.all_string = None
 
         for item in self.items:
             if re.match(".all", item):
@@ -31,8 +34,8 @@ class SpfRecord:
                 try:
                     spf_string = get_spf_string(redirect.group(1))
                     self._process_redirect(spf_string)
-                except:
-                    return
+                except NoSpfRecordException as ex:
+                    logging.exception(ex)
 
     def _process_redirect(self, spf_string):
         spf_item_regex = "(?:((?:\+|-|~)?(?:a|mx|ptr|include|ip4|ip6|exists|redirect|exp|all)(?:(?::|/)?(?:\S*))?) ?)"
@@ -49,19 +52,28 @@ class SpfRecord:
                 try:
                     spf_string = get_spf_string(redirect.group(1))
                     self._process_redirect(spf_string)
-                except:
-                    return
+                except NoSpfRecordException as ex:
+                    logging.exception(ex)
 
     def __str__(self):
         return self.spf_string
 
-class DmarcRecord:
+class DmarcRecord(object):
     def __init__(self, dmarc_string):
         dmarc_regex = "(\w+)=(.*?)(?:; ?|$)"
 
         self.dmarc_string = dmarc_string
 
         items = re.findall(dmarc_regex, dmarc_string)
+
+        self.version = None
+        self.policy = None
+        self.pct = None
+        self.rua = None
+        self.ruf = None
+        self.subdomain_policy = None
+        self.dkim_alignment = None
+        self.spf_alignment = None
 
         for item in items:
             prepend = item[0]

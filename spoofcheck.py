@@ -20,13 +20,13 @@ if __name__ == "__main__":
             info("Found SPF record:")
             info(str(spf))
 
-            try:
+            if spf.all_string is not None:
                 if spf.all_string == "~all" or spf.all_string == "-all":
                     meh("SPF record contains an All item: " + spf.all_string)
                 else:
                     good("SPF record All item is too weak: " + spf.all_string)
                     spoofable = True
-            except AttributeError:
+            else:
                 good("SPF record has no All string")
 
         except NoSpfRecordException:
@@ -38,29 +38,25 @@ if __name__ == "__main__":
             info("Found DMARC record:")
             info(str(dmarc))
 
-            try:
+            if dmarc.policy is not None:
                 if not dmarc.policy == "reject" and not dmarc.policy == "quarantine":
                     spoofable = True
                     good("DMARC policy set to " + dmarc.policy)
                 else:
                     bad("DMARC policy set to " + dmarc.policy)
 
-            except AttributeError:
+            else:
                 good("DMARC record has no Policy")
                 spoofable = True
 
-            try:
-                if dmarc.pct != str(100):
-                    meh("DMARC pct is set to " + dmarc.pct +"% - might be possible")
-            except: pass
+            if dmarc.pct is not None and dmarc.pct != str(100):
+                meh("DMARC pct is set to " + dmarc.pct +"% - might be possible")
 
-            try:
+            if dmarc.rua is not None:
                 meh("Aggregate reports will be sent: " + dmarc.rua)
-            except: pass
 
-            try:
+            if dmarc.ruf is not None:
                 meh("Forensics reports will be sent: " + dmarc.ruf)
-            except: pass
 
 
         except NoDmarcRecordException:
