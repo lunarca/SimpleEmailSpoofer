@@ -27,13 +27,13 @@ def get_args():
 
 
     email_options = parser.add_argument_group("Email Options")
-    email_options.add_argument("-i", "--interactive", action="store_true", dest="interactive_email", 
+    email_options.add_argument("-i", "--interactive", action="store_true", dest="interactive_email",
         help="Input email in interactive mode")
 
     smtp_options = parser.add_argument_group("SMTP options")
-    smtp_options.add_argument("-s", "--server", dest="smtp_server", 
+    smtp_options.add_argument("-s", "--server", dest="smtp_server",
         help="SMTP server IP or DNS name (default localhost)", default="localhost")
-    smtp_options.add_argument("-p", "--port", dest="smtp_port", type=int, help="SMTP server port (default 25)", 
+    smtp_options.add_argument("-p", "--port", dest="smtp_port", type=int, help="SMTP server port (default 25)",
         default=25)
 
     return parser.parse_args()
@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
     from_domain = email_re.match(args.from_address).group(1)
     to_domain = email_re.match(args.to_address).group(1)
-    
+
     info("Checking if from domain " + Style.BRIGHT + from_domain + Style.NORMAL + " is spoofable")
 
 
@@ -177,6 +177,8 @@ if __name__ == "__main__":
             exit(1)
 
         server.sendmail(args.from_address, args.to_address, msg.as_string())
+
+        good("Email Sent")
 
     except smtplib.SMTPException as e:
         error("Error: Could not send email to " + args.to_address )
