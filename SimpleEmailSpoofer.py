@@ -1,14 +1,18 @@
 #! /usr/bin/env python
 
-from libs.EmailProtectionsLib import *
-from libs.PrettyOutput import *
 
 import re
 import smtplib
 import argparse
 
-from email.MIMEMultipart import MIMEMultipart
-from email.MIMEText import MIMEText
+import emailprotectionslib.dmarc as dmarclib
+import emailprotectionslib.spf as spflib
+
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+from libs.PrettyOutput import *
+
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -38,8 +42,9 @@ def get_args():
 
     return parser.parse_args()
 
+
 def get_ack(force):
-    info("To continue: [yes/no]")
+    output_info("To continue: [yes/no]")
     if force is False:
         yn = raw_input()
         if yn != "yes":
@@ -47,10 +52,11 @@ def get_ack(force):
         else:
             return True
     elif force is True:
-        meh( "Forced yes")
+        output_indifferent( "Forced yes")
         return True
     else:
         raise TypeError("Passed in non-boolean")
+
 
 if __name__ == "__main__":
     args = get_args()
@@ -61,125 +67,122 @@ if __name__ == "__main__":
 
     # Read email text into email_text
     if args.interactive_email:
-        info("Enter HTML email line by line")
-        info("Press CTRL+D to finish")
+        output_info("Enter HTML email line by line")
+        output_info("Press CTRL+D to finish")
         while True:
             try:
                 line = raw_input("| ")
                 email_text += line + "\n"
             except EOFError:
-                info("Email captured.")
+                output_info("Email captured.")
                 break
     else:
         try:
             with open(args.filename, "r") as infile:
-                info("Reading " + args.filename + " as email file")
+                output_info("Reading " + args.filename + " as email file")
                 email_text = infile.read()
         except:
-            error("Could not open file " + args.filename)
+            output_error("Could not open file " + args.filename)
             exit(-1)
 
     email_re = re.compile(".*@(.*\...*)")
 
-
     from_domain = email_re.match(args.from_address).group(1)
     to_domain = email_re.match(args.to_address).group(1)
-
-    info("Checking if from domain " + Style.BRIGHT + from_domain + Style.NORMAL + " is spoofable")
-
+    output_info("Checking if from domain " + Style.BRIGHT + from_domain + Style.NORMAL + " is spoofable")
 
     if from_domain == "gmail.com":
         if to_domain == "gmail.com":
-            bad("You are trying to spoof from a gmail address to a gmail address.")
-            bad("The Gmail web application will display a warning message on your email.")
+            output_bad("You are trying to spoof from a gmail address to a gmail address.")
+            output_bad("The Gmail web application will display a warning message on your email.")
             if not get_ack(args.force):
-                bad("Exiting")
+                output_bad("Exiting")
                 exit(1)
         else:
-            meh("You are trying to spoof from a gmail address.")
-            meh("If the domain you are sending to is controlled by Google Apps the web application will display a warning message on your email.")
+            output_indifferent("You are trying to spoof from a gmail address.")
+            output_indifferent("If the domain you are sending to is controlled by Google Apps the web application will display a warning message on your email.")
             if not get_ack(args.force):
-                bad("Exiting")
+                output_bad("Exiting")
                 exit(1)
 
     if args.spoof_check:
         spoofable = False
         try:
-            spf = get_spf(from_domain)
+            spf = spflib.SpfRecord.from_domain(from_domain)
 
             if spf.all_string is not None and not (spf.all_string == "~all" or spf.all_string == "-all"):
                 spoofable = True
 
-        except NoSpfRecordException:
+        except spflib.NoSpfRecordException:
             spoofable = True
 
         try:
-            dmarc = get_dmarc(from_domain)
-            info(str(dmarc))
+            dmarc = dmarclib.DmarcRecord.from_domain(from_domain)
+            output_info(str(dmarc))
 
             if dmarc.policy is None or not (dmarc.policy == "reject" or dmarc.policy == "quarantine"):
                 spoofable = True
 
             if dmarc.pct is not None and dmarc.pct != str(100):
-                meh("DMARC pct is set to " + dmarc.pct +"% - Spoofing might be possible")
+                output_indifferent("DMARC pct is set to " + dmarc.pct + "% - Spoofing might be possible")
 
             if dmarc.rua is not None:
-                meh("Aggregate reports will be sent: " + dmarc.rua)
+                output_indifferent("Aggregate reports will be sent: " + dmarc.rua)
                 if not get_ack(args.force):
-                    bad("Exiting")
+                    output_bad("Exiting")
                     exit(1)
 
             if dmarc.ruf is not None:
-                meh("Forensics reports will be sent: " + dmarc.ruf)
+                output_indifferent("Forensics reports will be sent: " + dmarc.ruf)
                 if not get_ack(args.force):
-                    bad("Exiting")
+                    output_bad("Exiting")
                     exit(1)
 
-        except NoDmarcRecordException:
+        except dmarclib.NoDmarcRecordException:
             spoofable = True
 
         if not spoofable:
-            bad("From domain " + Style.BRIGHT + from_domain + Style.NORMAL + " is not spoofable.")
+            output_bad("From domain " + Style.BRIGHT + from_domain + Style.NORMAL + " is not spoofable.")
 
             if not args.force:
-                bad("Exiting. (-f to override)")
+                output_bad("Exiting. (-f to override)")
                 exit(2)
             else:
-                meh("Overriding...")
+                output_indifferent("Overriding...")
         else:
-            good("From domain " + Style.BRIGHT + from_domain + Style.NORMAL + " is spoofable!")
+            output_good("From domain " + Style.BRIGHT + from_domain + Style.NORMAL + " is spoofable!")
 
-    info("Sending to " + args.to_address)
+    output_info("Sending to " + args.to_address)
 
     try:
-        info("Connecting to SMTP server at " + args.smtp_server + ":" + str(args.smtp_port))
+        output_info("Connecting to SMTP server at " + args.smtp_server + ":" + str(args.smtp_port))
         server = smtplib.SMTP(args.smtp_server, args.smtp_port)
         msg = MIMEMultipart("alternative")
         msg.set_charset("utf-8")
 
         if args.from_name is not None:
-            info("Setting From header to: " + args.from_name + "<" + args.from_address + ">")
+            output_info("Setting From header to: " + args.from_name + "<" + args.from_address + ">")
             msg["From"] = args.from_name + "<" + args.from_address + ">"
         else:
-            info("Setting From header to: " + args.from_address)
+            output_info("Setting From header to: " + args.from_address)
             msg["From"] = args.from_address
 
         if args.subject is not None:
-            info("Setting Subject header to: " + args.subject)
+            output_info("Setting Subject header to: " + args.subject)
             msg["Subject"] = args.subject
 
         msg.attach(MIMEText(email_text, 'html', 'utf-8'))
 
-        info("Send email?")
+        output_info("Send email?")
 
         if not get_ack(args.force):
-            bad("Exiting")
+            output_bad("Exiting")
             exit(1)
 
         server.sendmail(args.from_address, args.to_address, msg.as_string())
 
-        good("Email Sent")
+        output_good("Email Sent")
 
     except smtplib.SMTPException as e:
-        error("Error: Could not send email to " + args.to_address )
+        output_error("Error: Could not send email to " + args.to_address )
         raise e
