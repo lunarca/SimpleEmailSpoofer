@@ -107,17 +107,17 @@ if __name__ == "__main__":
 
     if args.spoof_check:
         spoofable = False
-        try:
-            spf = spflib.SpfRecord.from_domain(from_domain)
+        spf = spflib.SpfRecord.from_domain(from_domain)
+        if spf is not None:
 
             if spf.all_string is not None and not (spf.all_string == "~all" or spf.all_string == "-all"):
                 spoofable = True
 
-        except spflib.NoSpfRecordException:
+        else:
             spoofable = True
 
-        try:
-            dmarc = dmarclib.DmarcRecord.from_domain(from_domain)
+        dmarc = dmarclib.DmarcRecord.from_domain(from_domain)
+        if dmarc is not None:
             output_info(str(dmarc))
 
             if dmarc.policy is None or not (dmarc.policy == "reject" or dmarc.policy == "quarantine"):
@@ -137,8 +137,7 @@ if __name__ == "__main__":
                 if not get_ack(args.force):
                     output_bad("Exiting")
                     exit(1)
-
-        except dmarclib.NoDmarcRecordException:
+        else:
             spoofable = True
 
         if not spoofable:
