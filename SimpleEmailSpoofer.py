@@ -22,23 +22,22 @@ def get_args():
     parser.add_argument("filename", nargs="?", help="Filename containing an HTML email")
 
     parser.add_argument("-c", "--check", dest="spoof_check", action="store_true",
-        help="Check to ensure FROM domain can be spoofed from (default)", default=True)
+                        help="Check to ensure FROM domain can be spoofed from (default)", default=True)
     parser.add_argument("-x", "--nocheck", dest="spoof_check", action="store_false",
-        help="Do not check that FROM domain can be spoofed from")
+                        help="Do not check that FROM domain can be spoofed from")
     parser.add_argument("-f", "--force", dest="force", action="store_true", default=False,
-        help="Force the email to send despite protections")
+                        help="Force the email to send despite protections")
     parser.add_argument("-n", "--from_name", dest="from_name", help="From name")
-
 
     email_options = parser.add_argument_group("Email Options")
     email_options.add_argument("-i", "--interactive", action="store_true", dest="interactive_email",
-        help="Input email in interactive mode")
+                               help="Input email in interactive mode")
 
     smtp_options = parser.add_argument_group("SMTP options")
     smtp_options.add_argument("-s", "--server", dest="smtp_server",
-        help="SMTP server IP or DNS name (default localhost)", default="localhost")
+                              help="SMTP server IP or DNS name (default localhost)", default="localhost")
     smtp_options.add_argument("-p", "--port", dest="smtp_port", type=int, help="SMTP server port (default 25)",
-        default=25)
+                              default=25)
 
     return parser.parse_args()
 
@@ -52,7 +51,7 @@ def get_ack(force):
         else:
             return True
     elif force is True:
-        output_indifferent( "Forced yes")
+        output_indifferent("Forced yes")
         return True
     else:
         raise TypeError("Passed in non-boolean")
@@ -100,7 +99,8 @@ if __name__ == "__main__":
                 exit(1)
         else:
             output_indifferent("You are trying to spoof from a gmail address.")
-            output_indifferent("If the domain you are sending to is controlled by Google Apps the web application will display a warning message on your email.")
+            output_indifferent(
+                "If the domain you are sending to is controlled by Google Apps the web application will display a warning message on your email.")
             if not get_ack(args.force):
                 output_bad("Exiting")
                 exit(1)
@@ -184,5 +184,5 @@ if __name__ == "__main__":
         output_good("Email Sent")
 
     except smtplib.SMTPException as e:
-        output_error("Error: Could not send email to " + args.to_address )
+        output_error("Error: Could not send email to " + args.to_address)
         raise e
