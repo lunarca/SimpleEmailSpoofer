@@ -20,7 +20,7 @@ def get_args():
     parser.add_argument("-f", "--from", dest="from_address", help="Email address to send from")
     parser.add_argument("-n", "--from_name", dest="from_name", help="From name")
 
-    parser.add_argument("-s", dest="subject", nargs="?", help="Subject for the email")
+    parser.add_argument("-j", dest="subject", nargs="?", help="Subject for the email")
     parser.add_argument("filename", nargs="?", help="Filename containing an HTML email")
 
     parser.add_argument("-c", "--check", dest="spoof_check", action="store_true",
