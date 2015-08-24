@@ -20,8 +20,8 @@ def get_args():
     parser.add_argument("-f", "--from", dest="from_address", help="Email address to send from")
     parser.add_argument("-n", "--from_name", dest="from_name", help="From name")
 
-    parser.add_argument("-j", dest="subject", nargs="?", help="Subject for the email")
-    parser.add_argument("filename", nargs="?", help="Filename containing an HTML email")
+    parser.add_argument("-j", "--subject", dest="subject", nargs="?", help="Subject for the email")
+    parser.add_argument("-e", "--email_filename", dest="email_filename", nargs="?", help="Filename containing an HTML email")
 
     parser.add_argument("-c", "--check", dest="spoof_check", action="store_true",
         help="Check to ensure FROM domain can be spoofed from (default)", default=True)
@@ -79,11 +79,11 @@ if __name__ == "__main__":
                 break
     else:
         try:
-            with open(args.filename, "r") as infile:
-                output_info("Reading " + args.filename + " as email file")
+            with open(args.email_filename, "r") as infile:
+                output_info("Reading " + args.email_filename + " as email file")
                 email_text = infile.read()
         except:
-            output_error("Could not open file " + args.filename)
+            output_error("Could not open file " + args.email_filename)
             exit(-1)
 
     email_re = re.compile(".*@(.*\...*)")
