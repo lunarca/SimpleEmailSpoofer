@@ -175,11 +175,13 @@ def is_domain_spoofable(from_address, to_address):
 def bootstrap_db():
     global db
     db.execute("CREATE TABLE IF NOT EXISTS targets(email_address, uuid)")
+    db.commit()
 
 
 def save_tracking_uuid(email_address, target_uuid):
     global db
     db.execute("INSERT INTO targets(email_address, uuid) VALUES (?, ?)", (email_address, target_uuid))
+    db.commit()
 
 
 def create_tracking_uuid(email_address):
