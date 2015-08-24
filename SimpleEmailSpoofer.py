@@ -16,18 +16,19 @@ from libs.PrettyOutput import *
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("to_address", help="Email address to send to")
-    parser.add_argument("from_address", help="Email address to send from")
-    parser.add_argument("subject", nargs="?", help="Subject for the email")
+    parser.add_argument("-t", "--to", dest="to_address", help="Email address to send to")
+    parser.add_argument("-f", "--from", dest="from_address", help="Email address to send from")
+    parser.add_argument("-n", "--from_name", dest="from_name", help="From name")
+
+    parser.add_argument("-s", dest="subject", nargs="?", help="Subject for the email")
     parser.add_argument("filename", nargs="?", help="Filename containing an HTML email")
 
     parser.add_argument("-c", "--check", dest="spoof_check", action="store_true",
         help="Check to ensure FROM domain can be spoofed from (default)", default=True)
     parser.add_argument("-x", "--nocheck", dest="spoof_check", action="store_false",
         help="Do not check that FROM domain can be spoofed from")
-    parser.add_argument("-f", "--force", dest="force", action="store_true", default=False,
+    parser.add_argument("--force", dest="force", action="store_true", default=False,
         help="Force the email to send despite protections")
-    parser.add_argument("-n", "--from_name", dest="from_name", help="From name")
 
 
     email_options = parser.add_argument_group("Email Options")
