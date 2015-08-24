@@ -4,6 +4,7 @@
 import re
 import smtplib
 import argparse
+import logging
 
 import emailprotectionslib.dmarc as dmarclib
 import emailprotectionslib.spf as spflib
@@ -21,7 +22,11 @@ def get_args():
     parser.add_argument("-n", "--from_name", dest="from_name", help="From name")
 
     parser.add_argument("-j", "--subject", dest="subject", nargs="?", help="Subject for the email")
-    parser.add_argument("-e", "--email_filename", dest="email_filename", nargs="?", help="Filename containing an HTML email")
+    parser.add_argument("-e", "--email_filename", dest="email_filename", nargs="?",
+                        help="Filename containing an HTML email")
+
+    parser.add_argument("-a", "--to_address_filename", dest="to_address_filename", nargs="?",
+                        help="Filename containing a list of TO addresses")
 
     parser.add_argument("-c", "--check", dest="spoof_check", action="store_true",
         help="Check to ensure FROM domain can be spoofed from (default)", default=True)
@@ -53,43 +58,48 @@ def get_ack(force):
         else:
             return True
     elif force is True:
-        output_indifferent( "Forced yes")
+        output_indifferent("Forced yes")
         return True
     else:
         raise TypeError("Passed in non-boolean")
 
 
-if __name__ == "__main__":
-    args = get_args()
-
-    print args
-
+def get_interactive_email():
     email_text = ""
 
     # Read email text into email_text
-    if args.interactive_email:
-        output_info("Enter HTML email line by line")
-        output_info("Press CTRL+D to finish")
-        while True:
-            try:
-                line = raw_input("| ")
-                email_text += line + "\n"
-            except EOFError:
-                output_info("Email captured.")
-                break
-    else:
+    output_info("Enter HTML email line by line")
+    output_info("Press CTRL+D to finish")
+    while True:
         try:
-            with open(args.email_filename, "r") as infile:
-                output_info("Reading " + args.email_filename + " as email file")
-                email_text = infile.read()
-        except:
-            output_error("Could not open file " + args.email_filename)
-            exit(-1)
+            line = raw_input("| ")
+            email_text += line + "\n"
+        except EOFError:
+            output_info("Email captured.")
+            break
+
+    return email_text
+
+
+def get_file_email():
+    email_text = ""
+    try:
+        with open(args.email_filename, "r") as infile:
+            output_info("Reading " + args.email_filename + " as email file")
+            email_text = infile.read()
+    except IOError:
+        output_error("Could not open file " + args.email_filename)
+        exit(-1)
+
+    return email_text
+
+
+def is_domain_spoofable(from_address, to_address):
 
     email_re = re.compile(".*@(.*\...*)")
 
-    from_domain = email_re.match(args.from_address).group(1)
-    to_domain = email_re.match(args.to_address).group(1)
+    from_domain = email_re.match(from_address).group(1)
+    to_domain = email_re.match(to_address).group(1)
     output_info("Checking if from domain " + Style.BRIGHT + from_domain + Style.NORMAL + " is spoofable")
 
     if from_domain == "gmail.com":
@@ -154,6 +164,33 @@ if __name__ == "__main__":
 
     output_info("Sending to " + args.to_address)
 
+
+if __name__ == "__main__":
+    args = get_args()
+
+    print args
+
+    email_text = ""
+    if args.interactive_email:
+        email_text = get_interactive_email()
+    else:
+        email_text = get_file_email()
+
+    to_addresses = []
+    if args.to_address is not None:
+        to_addresses.append(args.to_address)
+    elif args.to_address_filename is not None:
+        try:
+            with open(args.to_address_filename, "r") as to_address_file:
+                to_addresses = to_address_file.readlines()
+                print to_addresses
+        except IOError as e:
+            logging.error("Could not locate file %s", args.to_address_filename)
+            raise e
+    else:
+        logging.error("Could not load input file names")
+        exit(1)
+
     try:
         output_info("Connecting to SMTP server at " + args.smtp_server + ":" + str(args.smtp_port))
         server = smtplib.SMTP(args.smtp_server, args.smtp_port)
@@ -171,20 +208,13 @@ if __name__ == "__main__":
             output_info("Setting Subject header to: " + args.subject)
             msg["Subject"] = args.subject
 
-        msg["To"] = args.to_address
-
-        msg.attach(MIMEText(email_text, 'html', 'utf-8'))
-
-        output_info("Send email?")
-
-        if not get_ack(args.force):
-            output_bad("Exiting")
-            exit(1)
-
-        server.sendmail(args.from_address, args.to_address, msg.as_string())
-
-        output_good("Email Sent")
+        for to_address in to_addresses:
+            msg["To"] = to_address
+            msg.attach(MIMEText(email_text, 'html', 'utf-8'))
+            print msg["To"] + ", " + msg["Subject"]
+            server.sendmail(args.from_address, to_address, msg.as_string())
+            output_good("Email Sent to " + to_address)
 
     except smtplib.SMTPException as e:
-        output_error("Error: Could not send email to " + args.to_address )
+        output_error("Error: Could not send email")
         raise e
