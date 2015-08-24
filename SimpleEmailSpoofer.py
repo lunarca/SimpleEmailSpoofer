@@ -5,6 +5,8 @@ import re
 import smtplib
 import argparse
 import logging
+import sqlite3
+import uuid
 
 import emailprotectionslib.dmarc as dmarclib
 import emailprotectionslib.spf as spflib
@@ -13,6 +15,9 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from libs.PrettyOutput import *
+
+
+global db
 
 
 def get_args():
@@ -34,7 +39,9 @@ def get_args():
         help="Do not check that FROM domain can be spoofed from")
     parser.add_argument("--force", dest="force", action="store_true", default=False,
         help="Force the email to send despite protections")
-
+    parser.add_argument("--track", dest="track", action="store_true", default=False,
+                        help="Track email links with GUIDs")
+    parser.add_argument("-d", "--db", dest="db_name", help="SQLite database to store GUIDs")
 
     email_options = parser.add_argument_group("Email Options")
     email_options.add_argument("-i", "--interactive", action="store_true", dest="interactive_email",
@@ -165,10 +172,43 @@ def is_domain_spoofable(from_address, to_address):
     output_info("Sending to " + args.to_address)
 
 
+def bootstrap_db():
+    global db
+    db.execute("CREATE TABLE IF NOT EXISTS targets(email_address, uuid)")
+
+
+def save_tracking_uuid(email_address, target_uuid):
+    global db
+    db.execute("INSERT INTO targets(email_address, uuid) VALUES (?, ?)", (email_address, target_uuid))
+
+
+def create_tracking_uuid(email_address):
+    tracking_uuid = str(uuid.uuid4())
+    save_tracking_uuid(email_address, tracking_uuid)
+    return tracking_uuid
+
+
+def inject_tracking_uuid(email_text, tracking_uuid):
+    TRACK_PATTERN = "\[TRACK\]"
+
+    print "Injecting tracking UUID %s" % tracking_uuid
+
+    altered_email_text = re.sub(TRACK_PATTERN, tracking_uuid, email_text)
+    return altered_email_text
+
 if __name__ == "__main__":
+    global db
+
     args = get_args()
 
-    print args
+    global db
+    if args.track:
+        if args.db_name is not None:
+            db = sqlite3.connect(args.db_name)
+            bootstrap_db()
+        else:
+            logging.error("DB name is empty")
+            exit(1)
 
     email_text = ""
     if args.interactive_email:
@@ -183,7 +223,6 @@ if __name__ == "__main__":
         try:
             with open(args.to_address_filename, "r") as to_address_file:
                 to_addresses = to_address_file.readlines()
-                print to_addresses
         except IOError as e:
             logging.error("Could not locate file %s", args.to_address_filename)
             raise e
@@ -210,8 +249,14 @@ if __name__ == "__main__":
 
         for to_address in to_addresses:
             msg["To"] = to_address
-            msg.attach(MIMEText(email_text, 'html', 'utf-8'))
-            print msg["To"] + ", " + msg["Subject"]
+
+            if args.track:
+                tracking_uuid = create_tracking_uuid(to_address)
+                altered_email_text = inject_tracking_uuid(email_text, tracking_uuid)
+                msg.attach(MIMEText(altered_email_text, 'html', 'utf-8'))
+            else:
+                msg.attach(MIMEText(email_text, 'html', 'utf-8'))
+
             server.sendmail(args.from_address, to_address, msg.as_string())
             output_good("Email Sent to " + to_address)
 
