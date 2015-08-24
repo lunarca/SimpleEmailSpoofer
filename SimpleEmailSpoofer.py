@@ -29,6 +29,10 @@ def get_args():
     parser.add_argument("-j", "--subject", dest="subject", nargs="?", help="Subject for the email")
     parser.add_argument("-e", "--email_filename", dest="email_filename", nargs="?",
                         help="Filename containing an HTML email")
+    parser.add_argument("--important", dest="important", action="store_true", default=False,
+                        help="Send as a priority email")
+
+    parser.add_argument("--guess-name", dest="guess_name", action="store_true", default=False)
 
     parser.add_argument("-a", "--to_address_filename", dest="to_address_filename", nargs="?",
                         help="Filename containing a list of TO addresses")
@@ -198,6 +202,15 @@ def inject_tracking_uuid(email_text, tracking_uuid):
     altered_email_text = re.sub(TRACK_PATTERN, tracking_uuid, email_text)
     return altered_email_text
 
+
+def inject_name(email_text, name):
+    NAME_PATTERN = "\[NAME\]"
+    print "Injecting name %s" % name
+
+    altered_email_text = re.sub(NAME_PATTERN, name, email_text)
+    return altered_email_text
+
+
 if __name__ == "__main__":
     global db
 
@@ -248,6 +261,9 @@ if __name__ == "__main__":
         if args.subject is not None:
             output_info("Setting Subject header to: " + args.subject)
             msg["Subject"] = args.subject
+
+        if args.important:
+            msg['X-Priority'] = '2'
 
         for to_address in to_addresses:
             msg["To"] = to_address
