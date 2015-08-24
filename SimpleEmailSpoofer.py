@@ -171,6 +171,8 @@ if __name__ == "__main__":
             output_info("Setting Subject header to: " + args.subject)
             msg["Subject"] = args.subject
 
+        msg["To"] = args.to_address
+
         msg.attach(MIMEText(email_text, 'html', 'utf-8'))
 
         output_info("Send email?")
