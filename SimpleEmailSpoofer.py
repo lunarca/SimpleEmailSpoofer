@@ -230,7 +230,11 @@ if __name__ == "__main__":
     if args.interactive_email:
         email_text = get_interactive_email()
     else:
-        email_text = get_file_email()
+        try:
+            email_text = get_file_email()
+        except TypeError:
+            logging.error("Could not load email from file %s" % args.email_filename)
+            exit(1)
 
     to_addresses = []
     if args.to_address is not None:
