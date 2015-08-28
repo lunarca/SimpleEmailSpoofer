@@ -21,34 +21,35 @@ global db
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-t", "--to", dest="to_address", help="Email address to send to")
-    parser.add_argument("-f", "--from", dest="from_address", help="Email address to send from")
-    parser.add_argument("-n", "--from_name", dest="from_name", help="From name")
-
-    parser.add_argument("-j", "--subject", dest="subject", nargs="?", help="Subject for the email")
-    parser.add_argument("-e", "--email_filename", dest="email_filename", nargs="?",
-                        help="Filename containing an HTML email")
-    parser.add_argument("--important", dest="important", action="store_true", default=False,
-                        help="Send as a priority email")
-
-    parser.add_argument("--guess-name", dest="guess_name", action="store_true", default=False)
-
-    parser.add_argument("-a", "--to_address_filename", dest="to_address_filename", nargs="?",
-                        help="Filename containing a list of TO addresses")
-
-    parser.add_argument("-c", "--check", dest="spoof_check", action="store_true",
-                        help="Check to ensure FROM domain can be spoofed from (default)", default=True)
-    parser.add_argument("-x", "--nocheck", dest="spoof_check", action="store_false",
-                        help="Do not check that FROM domain can be spoofed from")
-    parser.add_argument("--force", dest="force", action="store_true", default=False,
-                        help="Force the email to send despite protections")
-    parser.add_argument("--track", dest="track", action="store_true", default=False,
-                        help="Track email links with GUIDs")
-    parser.add_argument("-d", "--db", dest="db_name", help="SQLite database to store GUIDs")
 
     email_options = parser.add_argument_group("Email Options")
+
+    email_options.add_argument("-t", "--to", dest="to_address", help="Email address to send to")
+    email_options.add_argument("-a", "--to_address_filename", dest="to_address_filename",
+                               help="Filename containing a list of TO addresses")
+    email_options.add_argument("-f", "--from", dest="from_address", help="Email address to send from")
+    email_options.add_argument("-n", "--from_name", dest="from_name", help="From name")
+
+    email_options.add_argument("-j", "--subject", dest="subject", help="Subject for the email")
+    email_options.add_argument("-e", "--email_filename", dest="email_filename",
+                               help="Filename containing an HTML email")
+    email_options.add_argument("--important", dest="important", action="store_true", default=False,
+                               help="Send as a priority email")
     email_options.add_argument("-i", "--interactive", action="store_true", dest="interactive_email",
                                help="Input email in interactive mode")
+
+    protections_options = parser.add_argument_group("Email Protections Options")
+    protections_options.add_argument("-c", "--check", dest="spoof_check", action="store_true",
+                                     help="Check to ensure FROM domain can be spoofed from (default)")
+    protections_options.add_argument("-x", "--no_check", dest="spoof_check", action="store_false",
+                                     help="Do not check that FROM domain can be spoofed from", default=False)
+    protections_options.add_argument("--force", dest="force", action="store_true", default=False,
+                                     help="Force the email to send despite protections")
+
+    tracking_options = parser.add_argument_group("Email Tracking Options")
+    tracking_options.add_argument("--track", dest="track", action="store_true", default=False,
+                                  help="Track email links with GUIDs")
+    tracking_options.add_argument("-d", "--db", dest="db_name", help="SQLite database to store GUIDs")
 
     smtp_options = parser.add_argument_group("SMTP options")
     smtp_options.add_argument("-s", "--server", dest="smtp_server",
