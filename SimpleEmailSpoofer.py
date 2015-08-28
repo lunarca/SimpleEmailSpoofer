@@ -16,7 +16,6 @@ from email.mime.text import MIMEText
 
 from libs.PrettyOutput import *
 
-
 global db
 
 
@@ -38,24 +37,24 @@ def get_args():
                         help="Filename containing a list of TO addresses")
 
     parser.add_argument("-c", "--check", dest="spoof_check", action="store_true",
-        help="Check to ensure FROM domain can be spoofed from (default)", default=True)
+                        help="Check to ensure FROM domain can be spoofed from (default)", default=True)
     parser.add_argument("-x", "--nocheck", dest="spoof_check", action="store_false",
-        help="Do not check that FROM domain can be spoofed from")
+                        help="Do not check that FROM domain can be spoofed from")
     parser.add_argument("--force", dest="force", action="store_true", default=False,
-        help="Force the email to send despite protections")
+                        help="Force the email to send despite protections")
     parser.add_argument("--track", dest="track", action="store_true", default=False,
                         help="Track email links with GUIDs")
     parser.add_argument("-d", "--db", dest="db_name", help="SQLite database to store GUIDs")
 
     email_options = parser.add_argument_group("Email Options")
     email_options.add_argument("-i", "--interactive", action="store_true", dest="interactive_email",
-        help="Input email in interactive mode")
+                               help="Input email in interactive mode")
 
     smtp_options = parser.add_argument_group("SMTP options")
     smtp_options.add_argument("-s", "--server", dest="smtp_server",
-        help="SMTP server IP or DNS name (default localhost)", default="localhost")
+                              help="SMTP server IP or DNS name (default localhost)", default="localhost")
     smtp_options.add_argument("-p", "--port", dest="smtp_port", type=int, help="SMTP server port (default 25)",
-        default=25)
+                              default=25)
 
     return parser.parse_args()
 
@@ -106,7 +105,6 @@ def get_file_email():
 
 
 def is_domain_spoofable(from_address, to_address):
-
     email_re = re.compile(".*@(.*\...*)")
 
     from_domain = email_re.match(from_address).group(1)
@@ -122,7 +120,9 @@ def is_domain_spoofable(from_address, to_address):
                 exit(1)
         else:
             output_indifferent("You are trying to spoof from a gmail address.")
-            output_indifferent("If the domain you are sending to is controlled by Google Apps the web application will display a warning message on your email.")
+            output_indifferent(
+                "If the domain you are sending to is controlled by Google Apps "
+                "the web application will display a warning message on your email.")
             if not get_ack(args.force):
                 output_bad("Exiting")
                 exit(1)
