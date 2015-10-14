@@ -13,6 +13,7 @@ import emailprotectionslib.spf as spflib
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
 
 from libs.PrettyOutput import *
 
@@ -37,6 +38,8 @@ def get_args():
                                help="Send as a priority email")
     email_options.add_argument("-i", "--interactive", action="store_true", dest="interactive_email",
                                help="Input email in interactive mode")
+
+    email_options.add_argument("--image", action="store", dest="image", help="Attach an image")
 
     protections_options = parser.add_argument_group("Email Protections Options")
     protections_options.add_argument("-c", "--check", dest="spoof_check", action="store_true",
@@ -269,6 +272,12 @@ if __name__ == "__main__":
 
         if args.important:
             msg['X-Priority'] = '2'
+
+        if args.image:
+            with open(args.image, "rb") as imagefile:
+                img = MIMEImage(imagefile.read())
+                msg.attach(img)
+
 
         for to_address in to_addresses:
             msg["To"] = to_address
