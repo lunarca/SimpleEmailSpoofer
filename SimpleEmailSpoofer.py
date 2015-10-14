@@ -8,12 +8,15 @@ import logging
 import sqlite3
 import uuid
 
+from os.path import basename
+
 import emailprotectionslib.dmarc as dmarclib
 import emailprotectionslib.spf as spflib
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
+from email.mime.application import MIMEApplication
 
 from libs.PrettyOutput import *
 
@@ -40,6 +43,7 @@ def get_args():
                                help="Input email in interactive mode")
 
     email_options.add_argument("--image", action="store", dest="image", help="Attach an image")
+    email_options.add_argument("--attach", action="store", dest="attachment_filename", help="Attach a file")
 
     protections_options = parser.add_argument_group("Email Protections Options")
     protections_options.add_argument("-c", "--check", dest="spoof_check", action="store_true",
@@ -277,6 +281,14 @@ if __name__ == "__main__":
             with open(args.image, "rb") as imagefile:
                 img = MIMEImage(imagefile.read())
                 msg.attach(img)
+
+        if args.attachment_filename is not None:
+            with open(args.attachment_filename, "rb") as attachment_file:
+                msg.attach(MIMEApplication(
+                    attachment_file.read(),
+                    Content_Disposition='attachment; filename="%s"' % basename(args.attachment_filename),
+                    Name=basename(args.attachment_filename)
+                ))
 
 
         for to_address in to_addresses:
