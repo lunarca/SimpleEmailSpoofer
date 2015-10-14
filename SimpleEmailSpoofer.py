@@ -282,15 +282,6 @@ if __name__ == "__main__":
                 img = MIMEImage(imagefile.read())
                 msg.attach(img)
 
-        if args.attachment_filename is not None:
-            with open(args.attachment_filename, "rb") as attachment_file:
-                msg.attach(MIMEApplication(
-                    attachment_file.read(),
-                    Content_Disposition='attachment; filename="%s"' % basename(args.attachment_filename),
-                    Name=basename(args.attachment_filename)
-                ))
-
-
         for to_address in to_addresses:
             msg["To"] = to_address
 
@@ -300,6 +291,14 @@ if __name__ == "__main__":
                 msg.attach(MIMEText(altered_email_text, 'html', 'utf-8'))
             else:
                 msg.attach(MIMEText(email_text, 'html', 'utf-8'))
+
+            if args.attachment_filename is not None:
+                with open(args.attachment_filename, "rb") as attachment_file:
+                    msg.attach(MIMEApplication(
+                        attachment_file.read(),
+                        Content_Disposition='attachment; filename="%s"' % basename(args.attachment_filename),
+                        Name=basename(args.attachment_filename)
+                    ))
 
             server.sendmail(args.from_address, to_address, msg.as_string())
             output_good("Email Sent to " + to_address)
