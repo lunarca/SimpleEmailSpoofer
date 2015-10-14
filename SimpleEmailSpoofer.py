@@ -9,6 +9,8 @@ import sqlite3
 import uuid
 
 from os.path import basename
+import os
+import mimetypes
 
 import emailprotectionslib.dmarc as dmarclib
 import emailprotectionslib.spf as spflib
@@ -16,7 +18,8 @@ import emailprotectionslib.spf as spflib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
-from email.mime.application import MIMEApplication
+from email.mime.base import MIMEBase
+from email import encoders
 
 from libs.PrettyOutput import *
 
@@ -293,12 +296,19 @@ if __name__ == "__main__":
                 msg.attach(MIMEText(email_text, 'html', 'utf-8'))
 
             if args.attachment_filename is not None:
+
+                ctype, encoding = mimetypes.guess_type(args.attachment_filename)
+                if ctype is None or encoding is not None:
+                    # No guess could be made, or the file is encoded (compressed), so
+                    # use a generic bag-of-bits type.
+                    ctype = 'application/octet-stream'
+                maintype, subtype = ctype.split('/', 1)
                 with open(args.attachment_filename, "rb") as attachment_file:
-                    msg.attach(MIMEApplication(
-                        attachment_file.read(),
-                        Content_Disposition='attachment; filename="%s"' % basename(args.attachment_filename),
-                        Name=basename(args.attachment_filename)
-                    ))
+                    inner = MIMEBase(maintype, subtype)
+                    inner.set_payload(attachment_file.read())
+                    encoders.encode_base64(inner)
+                inner.add_header('Content-Disposition', 'attachment', filename=args.attachment_filename)
+                msg.attach(inner)
 
             server.sendmail(args.from_address, to_address, msg.as_string())
             output_good("Email Sent to " + to_address)
