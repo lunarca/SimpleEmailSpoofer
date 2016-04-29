@@ -8,12 +8,7 @@ import logging
 import sqlite3
 import uuid
 
-from os.path import basename
-import os
 import mimetypes
-
-import emailprotectionslib.dmarc as dmarclib
-import emailprotectionslib.spf as spflib
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -47,14 +42,6 @@ def get_args():
 
     email_options.add_argument("--image", action="store", dest="image", help="Attach an image")
     email_options.add_argument("--attach", action="store", dest="attachment_filename", help="Attach a file")
-
-    protections_options = parser.add_argument_group("Email Protections Options")
-    protections_options.add_argument("-c", "--check", dest="spoof_check", action="store_true",
-                                     help="Check to ensure FROM domain can be spoofed from (default)")
-    protections_options.add_argument("-x", "--no_check", dest="spoof_check", action="store_false",
-                                     help="Do not check that FROM domain can be spoofed from", default=False)
-    protections_options.add_argument("--force", dest="force", action="store_true", default=False,
-                                     help="Force the email to send despite protections")
 
     tracking_options = parser.add_argument_group("Email Tracking Options")
     tracking_options.add_argument("--track", dest="track", action="store_true", default=False,
@@ -137,52 +124,6 @@ def is_domain_spoofable(from_address, to_address):
             if not get_ack(args.force):
                 output_bad("Exiting")
                 exit(1)
-
-    if args.spoof_check:
-        spoofable = False
-        spf = spflib.SpfRecord.from_domain(from_domain)
-        if spf is not None:
-
-            if spf.all_string is not None and not (spf.all_string == "~all" or spf.all_string == "-all"):
-                spoofable = True
-
-        else:
-            spoofable = True
-
-        dmarc = dmarclib.DmarcRecord.from_domain(from_domain)
-        if dmarc is not None:
-            output_info(str(dmarc))
-
-            if dmarc.policy is None or not (dmarc.policy == "reject" or dmarc.policy == "quarantine"):
-                spoofable = True
-
-            if dmarc.pct is not None and dmarc.pct != str(100):
-                output_indifferent("DMARC pct is set to " + dmarc.pct + "% - Spoofing might be possible")
-
-            if dmarc.rua is not None:
-                output_indifferent("Aggregate reports will be sent: " + dmarc.rua)
-                if not get_ack(args.force):
-                    output_bad("Exiting")
-                    exit(1)
-
-            if dmarc.ruf is not None:
-                output_indifferent("Forensics reports will be sent: " + dmarc.ruf)
-                if not get_ack(args.force):
-                    output_bad("Exiting")
-                    exit(1)
-        else:
-            spoofable = True
-
-        if not spoofable:
-            output_bad("From domain " + Style.BRIGHT + from_domain + Style.NORMAL + " is not spoofable.")
-
-            if not args.force:
-                output_bad("Exiting. (-f to override)")
-                exit(2)
-            else:
-                output_indifferent("Overriding...")
-        else:
-            output_good("From domain " + Style.BRIGHT + from_domain + Style.NORMAL + " is spoofable!")
 
     output_info("Sending to " + args.to_address)
 
