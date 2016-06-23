@@ -1,2 +1,10 @@
-colorama
 argparse
+colorama
+dnslib
+emailprotectionslib
+idna
+requests
+requests-file
+six
+tldextract
+wsgiref
