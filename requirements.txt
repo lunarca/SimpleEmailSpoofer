@@ -1,2 +1,4 @@
 colorama
 argparse
+emailprotectionslib
+tldextract

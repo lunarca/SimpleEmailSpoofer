@@ -17,3 +17,5 @@ Usage:
 ## Dependencies
 - `dnspython`
 - `colorama`
+- `emailprotectionslib`
+- `tldextract`
