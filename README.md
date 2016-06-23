@@ -30,7 +30,7 @@ These can be installed using pip:
 
 `pip install -r requirements.txt`
 
-### Basic Usage
+## Basic Usage
 
 Add the desired contents of the email in HTML format to an HTML file. Then, execute the following command: 
 
