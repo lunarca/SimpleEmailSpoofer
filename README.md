@@ -39,3 +39,8 @@ Add the desired contents of the email in HTML format to an HTML file. Then, exec
 Additional flags can be found by running
 
 `./SimpleEmailSpoofer.py -h`
+
+## Spoofcheck
+The Spoofcheck program, which allows users to identify whether or not domains are vulnerable to email spoofing, has moved to the following repository:
+
+[https://github.com/bishopfox/spoofcheck](https://github.com/bishopfox/spoofcheck)
