@@ -55,7 +55,7 @@ def get_args():
                               help="SMTP server IP or DNS name (default localhost)", default="localhost")
     smtp_options.add_argument("-p", "--port", dest="smtp_port", type=int, help="SMTP server port (default 25)",
                               default=25)
-    smtp_options.add_argument("--slow", action="store_true", dest="slow_send", type=bool, default=False, help="Slow the sending")
+    smtp_options.add_argument("--slow", action="store_true", dest="slow_send", default=False, help="Slow the sending")
 
     return parser.parse_args()
 
