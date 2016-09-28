@@ -7,6 +7,8 @@ import argparse
 import logging
 import sqlite3
 import uuid
+import time
+import random
 
 import mimetypes
 
@@ -53,6 +55,7 @@ def get_args():
                               help="SMTP server IP or DNS name (default localhost)", default="localhost")
     smtp_options.add_argument("-p", "--port", dest="smtp_port", type=int, help="SMTP server port (default 25)",
                               default=25)
+    smtp_options.add_argument("--slow", action="store_true", dest="slow_send", type=bool, default=False, help="Slow the sending")
 
     return parser.parse_args()
 
@@ -163,6 +166,11 @@ def inject_name(email_text, name):
     return altered_email_text
 
 
+def delay_send():
+    sleep_time = random.randint(1, 55) + (60*5)
+    time.sleep(sleep_time)
+
+
 if __name__ == "__main__":
     global db
 
@@ -253,6 +261,8 @@ if __name__ == "__main__":
 
             server.sendmail(args.from_address, to_address, msg.as_string())
             output_good("Email Sent to " + to_address)
+            if args.slow_send:
+                delay_send()
 
     except smtplib.SMTPException as e:
         output_error("Error: Could not send email")
