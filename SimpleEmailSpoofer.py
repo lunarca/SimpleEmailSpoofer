@@ -263,6 +263,8 @@ if __name__ == "__main__":
             output_good("Email Sent to " + to_address)
             if args.slow_send:
                 delay_send()
+                output_info("Connecting to SMTP server at " + args.smtp_server + ":" + str(args.smtp_port))
+                server = smtplib.SMTP(args.smtp_server, args.smtp_port)
 
     except smtplib.SMTPException as e:
         output_error("Error: Could not send email")
