@@ -42,6 +42,8 @@ def get_args():
     email_options.add_argument("-i", "--interactive", action="store_true", dest="interactive_email",
                                help="Input email in interactive mode")
 
+    email_options.add_argument("-r", "--reply-to", dest="reply_to", help="Set a reply-to header")
+
     email_options.add_argument("--image", action="store", dest="image", help="Attach an image")
     email_options.add_argument("--attach", action="store", dest="attachment_filename", help="Attach a file")
 
@@ -228,6 +230,9 @@ if __name__ == "__main__":
 
         if args.important:
             msg['X-Priority'] = '2'
+
+        if args.reply_to is not None:
+            msg['Reply-To'] = args.reply_to
 
         if args.image:
             with open(args.image, "rb") as imagefile:
