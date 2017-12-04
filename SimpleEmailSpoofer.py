@@ -57,6 +57,12 @@ def get_args():
                               help="SMTP server IP or DNS name (default localhost)", default="localhost")
     smtp_options.add_argument("-p", "--port", dest="smtp_port", type=int, help="SMTP server port (default 25)",
                               default=25)
+    smtp_options.add_argument("--user", dest="smtp_user", help="SMTP username",
+                              default=None)
+    smtp_options.add_argument("--pass", dest="smtp_pass", help="SMTP password",
+                              default=None)
+    smtp_options.add_argument("--ssl", dest="smtp_ssl", help="Connect to SMTP server via SSL",
+                              default=False)                                                                           
     smtp_options.add_argument("--slow", action="store_true", dest="slow_send", default=False, help="Slow the sending")
 
     return parser.parse_args()
@@ -212,8 +218,14 @@ if __name__ == "__main__":
         exit(1)
 
     try:
-        output_info("Connecting to SMTP server at " + args.smtp_server + ":" + str(args.smtp_port))
-        server = smtplib.SMTP(args.smtp_server, args.smtp_port)
+        print "Connecting to SMTP server at " + args.smtp_server + ":" + str(args.smtp_port)
+        if args.smtp_ssl == False:
+            server = smtplib.SMTP(args.smtp_server, args.smtp_port)
+        else:
+            server = smtplib.SMTP_SSL(args.smtp_server, args.smtp_port)
+        if args.smtp_user or args.smtp_pass != None:
+            server.ehlo()
+            server.login(args.smtp_user, args.smtp_pass)
         msg = MIMEMultipart("alternative")
         msg.set_charset("utf-8")
 
