@@ -1,6 +1,10 @@
 # SimpleEmailSpoofer
 A few Python programs designed to help penetration testers with email spoofing.
 
+
+## This Project is Retired
+Due to improvements in email protections and anti-spam techniques, it is no longer effective to attempt to spoof emails simply because they do not have a proper DMARC record or from arbitrary email servers. This project is retired and will not be maintained. 
+
 ## Setup
 
 ### Mail Server
