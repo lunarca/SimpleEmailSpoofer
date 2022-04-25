@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3.8
 
 
 import re
@@ -160,7 +160,7 @@ def create_tracking_uuid(email_address):
 def inject_tracking_uuid(email_text, tracking_uuid):
     TRACK_PATTERN = "\[TRACK\]"
 
-    print "Injecting tracking UUID %s" % tracking_uuid
+    print ("Injecting tracking UUID %s" % tracking_uuid)
 
     altered_email_text = re.sub(TRACK_PATTERN, tracking_uuid, email_text)
     return altered_email_text
@@ -168,7 +168,7 @@ def inject_tracking_uuid(email_text, tracking_uuid):
 
 def inject_name(email_text, name):
     NAME_PATTERN = "\[NAME\]"
-    print "Injecting name %s" % name
+    print ("Injecting name %s" % name)
 
     altered_email_text = re.sub(NAME_PATTERN, name, email_text)
     return altered_email_text
@@ -218,7 +218,7 @@ if __name__ == "__main__":
         exit(1)
 
     try:
-        print "Connecting to SMTP server at " + args.smtp_server + ":" + str(args.smtp_port)
+        print("Connecting to SMTP server at " + args.smtp_server + ":" + str(args.smtp_port))
         if args.smtp_ssl == False:
             server = smtplib.SMTP(args.smtp_server, args.smtp_port)
         else:
